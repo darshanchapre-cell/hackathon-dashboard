@@ -3,109 +3,141 @@ import pandas as pd
 import plotly.express as px
 
 st.set_page_config(
-    page_title="Hospital Management System",
-    page_icon="🏥",
+    page_title="Competitive Exam Vacancy Portal",
+    page_icon="🎓",
     layout="wide"
 )
 
-st.title("🏥 Hospital Management Dashboard")
-st.caption("Hospital Overview | Patient Management")
+st.title("🎓 Competitive Exam Forms & Vacancies")
+st.write("Find exams, application deadlines and vacancies.")
 
-# Sample hospital data
-df = pd.DataFrame({
-    "Department": [
-        "Cardiology",
-        "Neurology",
-        "Pediatrics",
-        "Orthopedics",
-        "General Medicine"
+# Demo data: replace with verified official notifications
+data = {
+    "Exam": [
+        "SSC CGL",
+        "SSC CHSL",
+        "RRB NTPC",
+        "UPSC Civil Services",
+        "IBPS PO",
+        "MPSC State Services"
     ],
-    "Patients": [42, 28, 35, 51, 44],
-    "Available Beds": [8, 12, 6, 10, 15],
-    "Emergency Cases": [5, 3, 4, 6, 2]
-})
+    "Category": [
+        "SSC", "SSC", "Railway",
+        "UPSC", "Banking", "State PSC"
+    ],
+    "Vacancies": [1000, 500, 800, 150, 600, 200],
+    "Last Date": [
+        "2026-11-10",
+        "2026-11-15",
+        "2026-11-20",
+        "2026-10-30",
+        "2026-11-05",
+        "2026-11-12"
+    ],
+    "Status": [
+        "Check Official Notice",
+        "Check Official Notice",
+        "Check Official Notice",
+        "Check Official Notice",
+        "Check Official Notice",
+        "Check Official Notice"
+    ]
+}
 
-# Sidebar
-st.sidebar.title("Hospital Menu")
-menu = st.sidebar.selectbox(
-    "Choose Section",
-    ["Dashboard", "Patients", "Departments"]
+df = pd.DataFrame(data)
+df["Last Date"] = pd.to_datetime(df["Last Date"])
+
+# Sidebar filters
+st.sidebar.header("Find an Exam")
+
+categories = ["All"] + sorted(df["Category"].unique().tolist())
+selected_category = st.sidebar.selectbox(
+    "Exam Category", categories
 )
 
-if menu == "Dashboard":
+search = st.sidebar.text_input("Search Exam Name")
 
-    st.subheader("Hospital Summary")
+filtered = df.copy()
 
-    c1, c2, c3, c4 = st.columns(4)
+if selected_category != "All":
+    filtered = filtered[
+        filtered["Category"] == selected_category
+    ]
 
-    c1.metric("Total Patients", int(df["Patients"].sum()))
-    c2.metric("Available Beds", int(df["Available Beds"].sum()))
-    c3.metric("Departments", len(df))
-    c4.metric("Emergency Cases", int(df["Emergency Cases"].sum()))
-
-    st.divider()
-
-    left, right = st.columns(2)
-
-    with left:
-        st.subheader("Patients by Department")
-        fig = px.bar(
-            df,
-            x="Department",
-            y="Patients",
-            color="Department",
-            title="Department-wise Patients"
+if search:
+    filtered = filtered[
+        filtered["Exam"].str.contains(
+            search, case=False, na=False
         )
-        st.plotly_chart(fig, use_container_width=True)
+    ]
 
-    with right:
-        st.subheader("Available Beds")
-        fig2 = px.pie(
-            df,
-            names="Department",
-            values="Available Beds",
-            title="Bed Availability"
-        )
-        st.plotly_chart(fig2, use_container_width=True)
+# Summary cards
+c1, c2, c3 = st.columns(3)
 
-    st.subheader("Department Overview")
-    st.dataframe(df, use_container_width=True)
+c1.metric("Exams Listed", len(filtered))
+c2.metric(
+    "Listed Vacancies",
+    f"{filtered['Vacancies'].sum():,}"
+)
+c3.metric(
+    "Categories",
+    filtered["Category"].nunique()
+)
 
-elif menu == "Patients":
+st.divider()
 
-    st.subheader("Patient Registration")
+# Bar chart
+st.subheader("📊 Vacancies by Exam")
 
-    name = st.text_input("Patient Name")
-    age = st.number_input("Age", min_value=0, max_value=120, value=18)
+if not filtered.empty:
+    fig = px.bar(
+        filtered,
+        x="Exam",
+        y="Vacancies",
+        color="Category",
+        title="Advertised Vacancies (Demo Data)"
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
-    department = st.selectbox(
-        "Department",
-        df["Department"].tolist()
+    # Pie chart
+    st.subheader("🥧 Vacancy Share by Category")
+
+    category_data = (
+        filtered.groupby("Category")["Vacancies"].sum()
+        .reset_index()
     )
 
-    if st.button("Register Patient"):
-        if name.strip():
-            st.success(
-                f"Patient {name} registered successfully!"
-            )
-            st.write("Age:", age)
-            st.write("Department:", department)
-        else:
-            st.warning("Please enter the patient's name.")
+    fig2 = px.pie(
+        category_data,
+        names="Category",
+        values="Vacancies",
+        title="Vacancies by Exam Category"
+    )
+    st.plotly_chart(fig2, use_container_width=True)
 
-elif menu == "Departments":
+    # Table
+    st.subheader("📋 Exam & Vacancy List")
 
-    st.subheader("Department Details")
-
-    selected = st.selectbox(
-        "Select Department",
-        df["Department"].tolist()
+    display_df = filtered.copy()
+    display_df["Last Date"] = (
+        display_df["Last Date"].dt.strftime("%d %b %Y")
     )
 
-    details = df[df["Department"] == selected]
+    st.dataframe(display_df, use_container_width=True)
 
-    st.dataframe(details, use_container_width=True)
+    csv = filtered.to_csv(index=False).encode("utf-8")
 
-    st.info(
-        "This dashboard uses sample data for demonstration."
+    st.download_button(
+        "⬇️ Download Exam List",
+        data=csv,
+        file_name="competitive_exam_vacancies.csv",
+        mime="text/csv"
     )
+else:
+    st.warning("No matching exams found.")
+
+st.caption(
+    "Important: Sample data for demonstration only. "
+    "Verify vacancies, deadlines and application status "
+    "on the official recruitment notification before applying."
+)
