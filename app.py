@@ -1,27 +1,40 @@
 import pandas as pd
-import plotly.express as px
+import matplotlib.pyplot as plt
 from IPython.display import display, HTML
 
-# Demo data — apna data milne par ise replace karenge
+# Sirf demo data; kisi asli patient ki jaankari nahi
 df = pd.DataFrame({
-    "Month": ["Jan", "Feb", "Mar", "Apr", "May"],
-    "Users": [120, 180, 150, 240, 310],
-    "Category": ["A", "B", "A", "B", "A"]
+    "Department": ["Cardiology", "Pediatrics", "Orthopedics", "General Medicine", "Neurology"],
+    "Patients": [42, 35, 28, 51, 19],
+    "Available Beds": [8, 12, 6, 10, 5]
 })
 
-fig = px.bar(df, x="Month", y="Users", color="Category",
-             title="Monthly Users", text="Users")
-fig.show()
+total_patients = df["Patients"].sum()
+total_beds = df["Available Beds"].sum()
 
 display(HTML(f"""
-<div style="display:flex;gap:16px;font-family:Arial">
-  <div style="padding:20px;background:#e8f0fe;border-radius:12px">
-    <b>Total users</b><br><span style="font-size:28px">{df['Users'].sum():,}</span>
+<h2 style="font-family:Arial">🏥 Hospital Overview</h2>
+<p style="font-family:Arial;color:#555">Demo dashboard — sample data</p>
+<div style="display:flex;gap:15px;font-family:Arial">
+  <div style="background:#e8f0fe;padding:18px;border-radius:10px">
+    <b>Patients today</b><br><span style="font-size:28px">{total_patients}</span>
   </div>
-  <div style="padding:20px;background:#e6f4ea;border-radius:12px">
-    <b>Monthly average</b><br><span style="font-size:28px">{df['Users'].mean():.0f}</span>
+  <div style="background:#e6f4ea;padding:18px;border-radius:10px">
+    <b>Available beds</b><br><span style="font-size:28px">{total_beds}</span>
+  </div>
+  <div style="background:#fff4e5;padding:18px;border-radius:10px">
+    <b>Departments</b><br><span style="font-size:28px">{len(df)}</span>
   </div>
 </div>
 """))
+
+plt.figure(figsize=(9, 4))
+plt.bar(df["Department"], df["Patients"], color="#4285F4")
+plt.title("Patients by Department")
+plt.ylabel("Patient count")
+plt.xticks(rotation=20, ha="right")
+plt.grid(axis="y", alpha=0.25)
+plt.tight_layout()
+plt.show()
 
 display(df)
