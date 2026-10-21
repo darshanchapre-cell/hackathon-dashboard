@@ -1,25 +1,27 @@
-import streamlit as st
 import pandas as pd
 import plotly.express as px
+from IPython.display import display, HTML
 
-st.set_page_config(page_title="Hackathon Dashboard", layout="wide")
-st.title("📊 Hackathon Dashboard")
-st.write("Yahan apne challenge ka short summary likho.")
-
-# Demo data — baad mein apne challenge ke data se replace karna
+# Demo data — apna data milne par ise replace karenge
 df = pd.DataFrame({
     "Month": ["Jan", "Feb", "Mar", "Apr", "May"],
     "Users": [120, 180, 150, 240, 310],
     "Category": ["A", "B", "A", "B", "A"]
 })
 
-col1, col2 = st.columns(2)
-col1.metric("Total users", f"{df['Users'].sum():,}")
-col2.metric("Monthly average", f"{df['Users'].mean():.0f}")
+fig = px.bar(df, x="Month", y="Users", color="Category",
+             title="Monthly Users", text="Users")
+fig.show()
 
-st.subheader("Users over time")
-fig = px.line(df, x="Month", y="Users", markers=True)
-st.plotly_chart(fig, use_container_width=True)
+display(HTML(f"""
+<div style="display:flex;gap:16px;font-family:Arial">
+  <div style="padding:20px;background:#e8f0fe;border-radius:12px">
+    <b>Total users</b><br><span style="font-size:28px">{df['Users'].sum():,}</span>
+  </div>
+  <div style="padding:20px;background:#e6f4ea;border-radius:12px">
+    <b>Monthly average</b><br><span style="font-size:28px">{df['Users'].mean():.0f}</span>
+  </div>
+</div>
+"""))
 
-category = st.selectbox("Category choose karo", df["Category"].unique())
-st.dataframe(df[df["Category"] == category], use_container_width=True)
+display(df)
