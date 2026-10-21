@@ -1,130 +1,126 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
+from streamlit_elements import elements, dashboard, mui
 
 st.set_page_config(
-    page_title="Competitive Exam Vacancy Portal",
-    page_icon="🎓",
+    page_title="Exam Vacancy Dashboard",
     layout="wide"
 )
 
-st.title("🎓 Competitive Exam Forms & Vacancies")
-st.write("Find exams, application deadlines and vacancies.")
+st.title("🎯 Competitive Exam Vacancy Dashboard")
+st.caption("Demo data — actual vacancies verify karna zaroori hai.")
 
-# Demo data: replace with verified official notifications
-data = {
+# Sample vacancy data
+df = pd.DataFrame({
     "Exam": [
         "SSC CGL",
-        "SSC CHSL",
         "RRB NTPC",
-        "UPSC Civil Services",
+        "UPSC CSE",
         "IBPS PO",
-        "MPSC State Services"
+        "MPSC"
     ],
     "Category": [
-        "SSC", "SSC", "Railway",
-        "UPSC", "Banking", "State PSC"
+        "Central", "Railway", "Central",
+        "Banking", "State"
     ],
-    "Vacancies": [1000, 500, 800, 150, 600, 200],
-    "Last Date": [
-        "2026-11-10",
-        "2026-11-15",
-        "2026-11-20",
-        "2026-10-30",
-        "2026-11-05",
-        "2026-11-12"
-    ],
-    "Status": [
-        "Check Official Notice",
-        "Check Official Notice",
-        "Check Official Notice",
-        "Check Official Notice",
-        "Check Official Notice",
-        "Check Official Notice"
-    ]
-}
+    "Vacancies": [14500, 8500, 1000, 5200, 500]
+})
 
-df = pd.DataFrame(data)
-df["Last Date"] = pd.to_datetime(df["Last Date"])
-
-# Sidebar filters
-st.sidebar.header("Find an Exam")
-
-categories = ["All"] + sorted(df["Category"].unique().tolist())
-selected_category = st.sidebar.selectbox(
-    "Exam Category", categories
+# Sidebar filter
+category = st.sidebar.selectbox(
+    "Select exam category",
+    ["All"] + sorted(df["Category"].unique().tolist())
 )
 
-search = st.sidebar.text_input("Search Exam Name")
+filtered = df if category == "All" else df[
+    df["Category"] == category
+]
 
-filtered = df.copy()
+total = int(filtered["Vacancies"].sum())
+exams = len(filtered)
 
-if selected_category != "All":
-    filtered = filtered[
-        filtered["Category"] == selected_category
-    ]
+# Dashboard card positions
+default_layout = [
+    {"i": "total", "x": 0, "y": 0, "w": 4, "h": 2},
+    {"i": "exams", "x": 4, "y": 0, "w": 4, "h": 2},
+    {"i": "table", "x": 0, "y": 2, "w": 8, "h": 5},
+]
 
-if search:
-    filtered = filtered[
-        filtered["Exam"].str.contains(
-            search, case=False, na=False
-        )
-    ]
+if "exam_layout" not in st.session_state:
+    st.session_state.exam_layout = default_layout
 
-# Summary cards
-c1, c2, c3 = st.columns(3)
 
-c1.metric("Exams Listed", len(filtered))
-c2.metric(
-    "Listed Vacancies",
-    f"{filtered['Vacancies'].sum():,}"
-)
-c3.metric(
-    "Categories",
-    filtered["Category"].nunique()
-)
+def save_layout(new_layout):
+    st.session_state.exam_layout = new_layout
 
-st.divider()
 
-# Bar chart
-st.subheader("📊 Vacancies by Exam")
+st.subheader("📊 Move the dashboard cards")
+st.caption("Cards ko mouse se drag karo aur apni pasand ki jagah rakho.")
 
-if not filtered.empty:
-    fig = px.bar(
-        filtered,
-        x="Exam",
-        y="Vacancies",
-        color="Category",
-        title="Advertised Vacancies (Demo Data)"
-    )
-    st.plotly_chart(fig, use_container_width=True)
+with elements("exam_dashboard"):
+    with dashboard.Grid(
+        st.session_state.exam_layout,
+        onLayoutChange=save_layout,
+        cols=12,
+        rowHeight=60,
+        draggableHandle=".drag-handle",
+    ):
+        with mui.Paper(
+            key="total",
+            elevation=3,
+            sx={"padding": 2, "overflow": "auto"}
+        ):
+            mui.Typography(
+                "Total Vacancies",
+                className="drag-handle",
+                sx={"cursor": "move"}
+            )
+            mui.Typography(str(total), variant="h4")
 
-     
-   
+        with mui.Paper(
+            key="exams",
+            elevation=3,
+            sx={"padding": 2, "overflow": "auto"}
+        ):
+            mui.Typography(
+                "Exams Listed",
+                className="drag-handle",
+                sx={"cursor": "move"}
+            )
+            mui.Typography(str(exams), variant="h4")
 
-    # Table
-    st.subheader("📋 Exam & Vacancy List")
+        with mui.Paper(
+            key="table",
+            elevation=3,
+            sx={"padding": 2, "overflow": "auto"}
+        ):
+            mui.Typography(
+                "Vacancy Details",
+                className="drag-handle",
+                sx={"cursor": "move"}
+            )
+            mui.TableContainer(
+                mui.Table(
+                    mui.TableHead(
+                        mui.TableRow(
+                            mui.TableCell("Exam"),
+                            mui.TableCell("Category"),
+                            mui.TableCell("Vacancies"),
+                        )
+                    ),
+                    mui.TableBody(*[
+                        mui.TableRow(
+                            mui.TableCell(row["Exam"]),
+                            mui.TableCell(row["Category"]),
+                            mui.TableCell(str(row["Vacancies"])),
+                            key=row["Exam"],
+                        )
+                        for _, row in filtered.iterrows()
+                    ])
+                )
+            )
 
-    display_df = filtered.copy()
-    display_df["Last Date"] = (
-        display_df["Last Date"].dt.strftime("%d %b %Y")
-    )
-
-    st.dataframe(display_df, use_container_width=True)
-
-    csv = filtered.to_csv(index=False).encode("utf-8")
-
-    st.download_button(
-        "⬇️ Download Exam List",
-        data=csv,
-        file_name="competitive_exam_vacancies.csv",
-        mime="text/csv"
-    )
-else:
-    st.warning("No matching exams found.")
-
-st.caption(
-    "Important: Sample data for demonstration only. "
-    "Verify vacancies, deadlines and application status "
-    "on the official recruitment notification before applying."
+st.info(
+    "Sample figures are for demonstration only, "
+    "not verified current vacancies."
 )
