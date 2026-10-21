@@ -99,21 +99,8 @@ if not filtered.empty:
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    # Pie chart
-    st.subheader("🥧 Vacancy Share by Category")
-
-    category_data = (
-        filtered.groupby("Category")["Vacancies"].sum()
-        .reset_index()
-    )
-
-    fig2 = px.pie(
-        category_data,
-        names="Category",
-        values="Vacancies",
-        title="Vacancies by Exam Category"
-    )
-    st.plotly_chart(fig2, use_container_width=True)
+     
+   
 
     # Table
     st.subheader("📋 Exam & Vacancy List")
