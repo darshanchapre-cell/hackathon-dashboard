@@ -1,80 +1,152 @@
-import streamlit as st
-import pandas as pd
-from streamlit_elements import elements, dashboard, mui
+HTML
 
-st.set_page_config(
-    page_title="Exam Vacancy Dashboard",
-    layout="wide"
-)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Traffic Management System</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #eef4f8;
+      margin: 0;
+      color: #1d2939;
+    }
+    header {
+      background: #12345a;
+      color: white;
+      text-align: center;
+      padding: 22px 12px;
+    }
+    .container {
+      max-width: 850px;
+      margin: 20px auto;
+      padding: 12px;
+    }
+    .card {
+      background: white;
+      padding: 18px;
+      margin-bottom: 15px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px #0001;
+    }
+    button {
+      background: #087e8b;
+      color: white;
+      border: none;
+      border-radius: 7px;
+      padding: 10px 15px;
+      cursor: pointer;
+    }
+    .signal {
+      background: #222;
+      width: 65px;
+      padding: 10px;
+      border-radius: 12px;
+      margin: 10px auto;
+    }
+    .light {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      margin: 7px auto;
+      background: #555;
+    }
+    .red { background: red; }
+    .yellow { background: yellow; }
+    .green { background: limegreen; }
+    .status { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Smart Traffic Management System</h1>
+    <p>Smarter Roads, Safer Journeys</p>
+  </header>
 
-st.title("🎯 Competitive Exam Vacancy Dashboard")
-st.caption("Demo data — actual vacancies verify karna zaroori hai.")
+  <div class="container">
 
-# Sample vacancy data
-df = pd.DataFrame({
-    "Exam": [
-        "SSC CGL",
-        "RRB NTPC",
-        "UPSC CSE",
-        "IBPS PO",
-        "MPSC"
-    ],
-    "Category": [
-        "Central", "Railway", "Central",
-        "Banking", "State"
-    ],
-    "Vacancies": [14500, 8500, 1000, 5200, 500]
-})
+    <div class="card">
+      <h2>1. Smart Traffic Signals</h2>
+      <div class="signal">
+        <div id="red" class="light red"></div>
+        <div id="yellow" class="light"></div>
+        <div id="green" class="light"></div>
+      </div>
+      <p id="signalStatus" class="status">Signal: STOP</p>
+      <button onclick="changeSignal()">Change Signal</button>
+    </div>
 
-# Sidebar filter
-category = st.sidebar.selectbox(
-    "Select exam category",
-    ["All"] + sorted(df["Category"].unique().tolist())
-)
+    <div class="card">
+      <h2>2. Traffic Density Monitoring</h2>
+      <p>Choose the traffic level:</p>
+      <select id="density">
+        <option value="Low">Low</option>
+        <option value="Medium">Medium</option>
+        <option value="High">High</option>
+      </select>
+      <button onclick="checkDensity()">Check Traffic</button>
+      <p id="densityResult">Traffic status will appear here.</p>
+    </div>
 
-filtered = df if category == "All" else df[
-    df["Category"] == category
-]
+    <div class="card">
+      <h2>3. Emergency Vehicle Priority</h2>
+      <p>Give priority to an ambulance or fire engine.</p>
+      <button onclick="emergency()">Emergency Alert</button>
+      <p id="emergencyResult">No emergency reported.</p>
+    </div>
 
-total = int(filtered["Vacancies"].sum())
-exams = len(filtered)
+    <div class="card">
+      <h2>4. Traffic Information</h2>
+      <button onclick="showInfo()">Show Safety Tips</button>
+      <p id="infoResult">Click to view traffic safety tips.</p>
+    </div>
 
-# Dashboard card positions
-default_layout = [
-    {"i": "total", "x": 0, "y": 0, "w": 4, "h": 2},
-    {"i": "exams", "x": 4, "y": 0, "w": 4, "h": 2},
-    {"i": "table", "x": 0, "y": 2, "w": 8, "h": 5},
-]
+  </div>
 
-if "exam_layout" not in st.session_state:
-    st.session_state.exam_layout = default_layout
+  <script>
+    let signal = 0;
 
+    function changeSignal() {
+      const lights = ["red", "green", "yellow"];
+      document.getElementById("red").className = "light";
+      document.getElementById("yellow").className = "light";
+      document.getElementById("green").className = "light";
 
-def save_layout(new_layout):
-    st.session_state.exam_layout = new_layout
+      signal = (signal + 1) % 3;
+      const active = lights[signal];
+      document.getElementById(active).className = "light " + active;
 
+      const messages = {
+        red: "STOP",
+        green: "GO",
+        yellow: "WAIT"
+      };
+      document.getElementById("signalStatus").textContent =
+        "Signal: " + messages[active];
+    }
 
-st.subheader("📊 Move the dashboard cards")
-st.caption("Cards ko mouse se drag karo aur apni pasand ki jagah rakho.")
-with elements("test_dashboard"):
-    with dashboard.Grid(
-        [
-            {"i": "total", "x": 0, "y": 0, "w": 4, "h": 2},
-            {"i": "exams", "x": 4, "y": 0, "w": 4, "h": 2},
-        ],
-        cols=12,
-        rowHeight=80,
-    ):
-        with mui.Paper(
-            key="total",
-            sx={"padding": 2, "backgroundColor": "#263238", "color": "white"}
-        ):
-            mui.Typography("Total Vacancies")
-            mui.Typography(str(total), variant="h4")
+    function checkDensity() {
+      const level = document.getElementById("density").value;
+      const advice = {
+        Low: "Traffic is low. Roads are relatively clear.",
+        Medium: "Moderate traffic. Drive carefully.",
+        High: "Heavy traffic. Consider an alternate route."
+      };
+      document.getElementById("densityResult").textContent =
+        advice[level];
+    }
 
-        with mui.Paper(
-            key="exams",
-            sx={"padding": 2, "backgroundColor": "#263238", "color": "white"}
-        ):
-            mui.Typography("Exams Listed")
-            mui.Typography(str(exams), variant="h4")
+    function emergency() {
+      document.getElementById("emergencyResult").textContent =
+        "Emergency priority requested! In a real system, authorized traffic control is required.";
+    }
+
+    function showInfo() {
+      document.getElementById("infoResult").textContent =
+        "Follow traffic signals, wear a helmet or seat belt, avoid phone use while driving, and give way to emergency vehicles.";
+    }
+  </script>
+</body>
+</html>
