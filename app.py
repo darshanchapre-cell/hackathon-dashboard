@@ -1,152 +1,143 @@
-HTML
+import streamlit as st
+import pandas as pd
+import plotly.express as px
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart Traffic Management System</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #eef4f8;
-      margin: 0;
-      color: #1d2939;
-    }
-    header {
-      background: #12345a;
-      color: white;
-      text-align: center;
-      padding: 22px 12px;
-    }
-    .container {
-      max-width: 850px;
-      margin: 20px auto;
-      padding: 12px;
-    }
-    .card {
-      background: white;
-      padding: 18px;
-      margin-bottom: 15px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px #0001;
-    }
-    button {
-      background: #087e8b;
-      color: white;
-      border: none;
-      border-radius: 7px;
-      padding: 10px 15px;
-      cursor: pointer;
-    }
-    .signal {
-      background: #222;
-      width: 65px;
-      padding: 10px;
-      border-radius: 12px;
-      margin: 10px auto;
-    }
-    .light {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      margin: 7px auto;
-      background: #555;
-    }
-    .red { background: red; }
-    .yellow { background: yellow; }
-    .green { background: limegreen; }
-    .status { font-weight: bold; }
-  </style>
-</head>
-<body>
-  <header>
-    <h1>Smart Traffic Management System</h1>
-    <p>Smarter Roads, Safer Journeys</p>
-  </header>
+st.set_page_config(
+    page_title="Competitive Exam Vacancy Portal",
+    page_icon="🎓",
+    layout="wide"
+)
 
-  <div class="container">
+st.title("🎓 Competitive Exam Forms & Vacancies")
+st.write("Find exams, application deadlines and vacancies.")
 
-    <div class="card">
-      <h2>1. Smart Traffic Signals</h2>
-      <div class="signal">
-        <div id="red" class="light red"></div>
-        <div id="yellow" class="light"></div>
-        <div id="green" class="light"></div>
-      </div>
-      <p id="signalStatus" class="status">Signal: STOP</p>
-      <button onclick="changeSignal()">Change Signal</button>
-    </div>
+# Demo data: replace with verified official notifications
+data = {
+    "Exam": [
+        "SSC CGL",
+        "SSC CHSL",
+        "RRB NTPC",
+        "UPSC Civil Services",
+        "IBPS PO",
+        "MPSC State Services"
+    ],
+    "Category": [
+        "SSC", "SSC", "Railway",
+        "UPSC", "Banking", "State PSC"
+    ],
+    "Vacancies": [1000, 500, 800, 150, 600, 200],
+    "Last Date": [
+        "2026-11-10",
+        "2026-11-15",
+        "2026-11-20",
+        "2026-10-30",
+        "2026-11-05",
+        "2026-11-12"
+    ],
+    "Status": [
+        "Check Official Notice",
+        "Check Official Notice",
+        "Check Official Notice",
+        "Check Official Notice",
+        "Check Official Notice",
+        "Check Official Notice"
+    ]
+}
 
-    <div class="card">
-      <h2>2. Traffic Density Monitoring</h2>
-      <p>Choose the traffic level:</p>
-      <select id="density">
-        <option value="Low">Low</option>
-        <option value="Medium">Medium</option>
-        <option value="High">High</option>
-      </select>
-      <button onclick="checkDensity()">Check Traffic</button>
-      <p id="densityResult">Traffic status will appear here.</p>
-    </div>
+df = pd.DataFrame(data)
+df["Last Date"] = pd.to_datetime(df["Last Date"])
 
-    <div class="card">
-      <h2>3. Emergency Vehicle Priority</h2>
-      <p>Give priority to an ambulance or fire engine.</p>
-      <button onclick="emergency()">Emergency Alert</button>
-      <p id="emergencyResult">No emergency reported.</p>
-    </div>
+# Sidebar filters
+st.sidebar.header("Find an Exam")
 
-    <div class="card">
-      <h2>4. Traffic Information</h2>
-      <button onclick="showInfo()">Show Safety Tips</button>
-      <p id="infoResult">Click to view traffic safety tips.</p>
-    </div>
+categories = ["All"] + sorted(df["Category"].unique().tolist())
+selected_category = st.sidebar.selectbox(
+    "Exam Category", categories
+)
 
-  </div>
+search = st.sidebar.text_input("Search Exam Name")
 
-  <script>
-    let signal = 0;
+filtered = df.copy()
 
-    function changeSignal() {
-      const lights = ["red", "green", "yellow"];
-      document.getElementById("red").className = "light";
-      document.getElementById("yellow").className = "light";
-      document.getElementById("green").className = "light";
+if selected_category != "All":
+    filtered = filtered[
+        filtered["Category"] == selected_category
+    ]
 
-      signal = (signal + 1) % 3;
-      const active = lights[signal];
-      document.getElementById(active).className = "light " + active;
+if search:
+    filtered = filtered[
+        filtered["Exam"].str.contains(
+            search, case=False, na=False
+        )
+    ]
 
-      const messages = {
-        red: "STOP",
-        green: "GO",
-        yellow: "WAIT"
-      };
-      document.getElementById("signalStatus").textContent =
-        "Signal: " + messages[active];
-    }
+# Summary cards
+c1, c2, c3 = st.columns(3)
 
-    function checkDensity() {
-      const level = document.getElementById("density").value;
-      const advice = {
-        Low: "Traffic is low. Roads are relatively clear.",
-        Medium: "Moderate traffic. Drive carefully.",
-        High: "Heavy traffic. Consider an alternate route."
-      };
-      document.getElementById("densityResult").textContent =
-        advice[level];
-    }
+c1.metric("Exams Listed", len(filtered))
+c2.metric(
+    "Listed Vacancies",
+    f"{filtered['Vacancies'].sum():,}"
+)
+c3.metric(
+    "Categories",
+    filtered["Category"].nunique()
+)
 
-    function emergency() {
-      document.getElementById("emergencyResult").textContent =
-        "Emergency priority requested! In a real system, authorized traffic control is required.";
-    }
+st.divider()
 
-    function showInfo() {
-      document.getElementById("infoResult").textContent =
-        "Follow traffic signals, wear a helmet or seat belt, avoid phone use while driving, and give way to emergency vehicles.";
-    }
-  </script>
-</body>
-</html>
+# Bar chart
+st.subheader("📊 Vacancies by Exam")
+
+if not filtered.empty:
+    fig = px.bar(
+        filtered,
+        x="Exam",
+        y="Vacancies",
+        color="Category",
+        title="Advertised Vacancies (Demo Data)"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Pie chart
+    st.subheader("🥧 Vacancy Share by Category")
+
+    category_data = (
+        filtered.groupby("Category")["Vacancies"].sum()
+        .reset_index()
+    )
+
+    fig2 = px.pie(
+        category_data,
+        names="Category",
+        values="Vacancies",
+        title="Vacancies by Exam Category"
+    )
+    st.plotly_chart(fig2, use_container_width=True)
+
+    # Table
+    st.subheader("📋 Exam & Vacancy List")
+
+    display_df = filtered.copy()
+    display_df["Last Date"] = (
+        display_df["Last Date"].dt.strftime("%d %b %Y")
+    )
+
+    st.dataframe(display_df, use_container_width=True)
+
+    csv = filtered.to_csv(index=False).encode("utf-8")
+
+    st.download_button(
+        "⬇️ Download Exam List",
+        data=csv,
+        file_name="competitive_exam_vacancies.csv",
+        mime="text/csv"
+    )
+else:
+    st.warning("No matching exams found.")
+
+st.caption(
+    "Important: Sample data for demonstration only. "
+    "Verify vacancies, deadlines and application status "
+    "on the official recruitment notification before applying."
+)
